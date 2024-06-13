@@ -1,0 +1,77 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: contratacao-process
+  namespace: bamoe91
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: contratacao-process
+  template:
+    metadata:
+      labels:
+        app: contratacao-process
+    spec:
+      containers:
+        - name: container
+          image: 'seberino/kogito-contratacao:1.0'
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: 'jdbc:postgresql://postgres:5432/kogito'
+            - name: QUARKUS_DATASOURCE_USERNAME
+              value: kogito-user
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              value: kogito-pass
+            - name: QUARKUS_DATASOURCE_DB-KIND
+              value: postgresql
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: 'kafka:9092'
+            - name: QUARKUS_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/kogito"
+            - name: QUARKUS_DATASOURCE_REACTIVE__URL
+              value: 'postgresql://kogito-user:kogito-pass@postgresql:5432/kogito'
+            - name: KOGITO_PERSISTENCE_TYPE
+              value: postgresql
+            - name: KOGITO_PERSISTENCE_AUTO_DDL
+              value: 'true'
+            - name: ENABLE_EVENTS
+              value: 'true'
+            - name: KOGITO_SERVICE_URL
+              value: 'http://contratacao-process-bamoe91.bamboe-cluster-dfbc2255337b6bc29518db04b50c00ca-0000.us-south.containers.appdomain.cloud'
+            - name: KOGITO_DATAINDEX_HTTP_URL
+              value: 'http://data-index-bamoe91.bamboe-cluster-dfbc2255337b6bc29518db04b50c00ca-0000.us-south.containers.appdomain.cloud/'
+            - name: KOGITO_DATAINDEX_WS_URL
+              value: 'ws://data-index-bamoe91.bamboe-cluster-dfbc2255337b6bc29518db04b50c00ca-0000.us-south.containers.appdomain.cloud/'
+            - name: KOGITO_PERSISTENCE_POSTGRESQL_CONNECTION_URI
+              value: 'postgresql://kogito-user:kogito-pass@postgresql:5432/kogito'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contratacao-process
+  namespace: bamoe91
+spec:
+  selector:
+    app: contratacao-process
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: contratacao-process
+  namespace: bamoe91
+spec:
+  to:
+    kind: Service
+    name: contratacao-process
+    weight: 100
+  port:
+    targetPort: 8080
+  wildcardPolicy: None
